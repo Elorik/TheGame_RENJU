@@ -1,10 +1,20 @@
+BOARD_SIZE = 19
+
+DIRECTIONS = [
+    (0, 1, "горизонтально →"),
+    (1, 0, "вертикально ↓"),
+    (1, 1, "діагональ ↘ (зліва-верх → справа-низ)"),
+    (-1, 1, "діагональ ↗ (зліва-низ → справа-верх)")
+]
+
+
 def show_rules():
     print("=" * 50)
     print("         ГРА RENJU - ПЕРЕВІРКА ПЕРЕМОЖЦЯ")
     print("=" * 50)
     print()
     print("ПРАВИЛА ГРИ:")
-    print("  - Поле 19x19 клітинок")
+    print(f"  - Поле {BOARD_SIZE}x{BOARD_SIZE} клітинок")
     print("  - Чорні камені позначаються цифрою 1")
     print("  - Білі камені позначаються цифрою 2")
     print("  - Порожня клітинка позначається цифрою 0")
@@ -37,50 +47,37 @@ def ask_ready():
             print("Введіть 'так' або 'ні'")
 
 
-def check_winner(board, color):
+def check_winner(board):
     """
-    Перевіряє чи виграв гравець з вказаним кольором (1 або 2).
-    Повертає (рядок, стовпець) першого каменя з п'ятірки, або None.
+    Перевіряє чи виграв гравець (1 або 2).
+    Повертає (color, рядок, стовпець) першого каменя з п'ятірки, або None.
     """
-    rows = 19
-    cols = 19
+    for row in range(BOARD_SIZE):
+        for col in range(BOARD_SIZE):
+            color = board[row][col]
+            if color == 0:
+                continue
+            for dr, dc, name in DIRECTIONS:
+                # перевіряємо, чи це початок послідовності
+                prev_r = row - dr
+                prev_c = col - dc
+                if 0 <= prev_r < BOARD_SIZE and 0 <= prev_c < BOARD_SIZE and board[prev_r][prev_c] == color:
+                    continue
 
-    
-    directions = [
-        (0, 1),   # горизонталь
-        (1, 0),   # вертикаль
-        (1, 1),   # діагональ
-        (-1, 1),  # діагональ
-    ]
-
-    for row in range(rows):
-        for col in range(cols):
-            for dr, dc in directions:
-                # Кількість каменів
                 count = 0
                 for step in range(5):
                     r = row + dr * step
                     c = col + dc * step
-                    if 0 <= r < rows and 0 <= c < cols and board[r][c] == color:
+                    if 0 <= r < BOARD_SIZE and 0 <= c < BOARD_SIZE and board[r][c] == color:
                         count += 1
                     else:
                         break
 
-                # перевірка на 6
                 if count == 5:
-                    
-                    before_r = row - dr
-                    before_c = col - dc
-                    before_ok = not (0 <= before_r < rows and 0 <= before_c < cols and board[before_r][before_c] == color)
-
-                    
                     after_r = row + dr * 5
                     after_c = col + dc * 5
-                    after_ok = not (0 <= after_r < rows and 0 <= after_c < cols and board[after_r][after_c] == color)
-
-                    if before_ok and after_ok:
-                        return (row + 1, col + 1)
-
+                    if not (0 <= after_r < BOARD_SIZE and 0 <= after_c < BOARD_SIZE and board[after_r][after_c] == color):
+                        return color, row + 1, col + 1
     return None
 
 
@@ -90,28 +87,50 @@ def solve(board, case_number):
     """
     print(f"--- Результат тесту #{case_number} ---")
 
-    black_win = check_winner(board, 1)
-    white_win = check_winner(board, 2)
+    result = check_winner(board)
 
-    if black_win:
-        print(1)
-        print(black_win[0], black_win[1])
-        print(f"Переможець: ЧОРНІ. Перший камінь п'ятірки: рядок {black_win[0]}, стовпець {black_win[1]}")
-    elif white_win:
-        print(2)
-        print(white_win[0], white_win[1])
-        print(f"Переможець: БІЛІ. Перший камінь п'ятірки: рядок {white_win[0]}, стовпець {white_win[1]}")
+    if result:
+        color, r, c = result
+        print(color)
+        print(r, c)
+        if color == 1:
+            print(f"Переможець: ЧОРНІ. Перший камінь п'ятірки: рядок {r}, стовпець {c}")
+        else:
+            print(f"Переможець: БІЛІ. Перший камінь п'ятірки: рядок {r}, стовпець {c}")
     else:
         print(0)
         print("Переможця ще немає.")
     print()
 
 
+def read_board():
+    """
+    Зчитує поле 19x19. Можна вводити рядок за рядком або весь блок одразу.
+    """
+    board = []
+    print(f"Введіть поле {BOARD_SIZE}x{BOARD_SIZE} (рядки через Enter):")
+    for _ in range(BOARD_SIZE):
+        while True:
+            try:
+                line = input().split()
+                if len(line) != BOARD_SIZE:
+                    print(f"  Помилка: потрібно рівно {BOARD_SIZE} чисел, ви ввели {len(line)}. Спробуйте ще раз.")
+                    continue
+                row = list(map(int, line))
+                if all(x in [0, 1, 2] for x in row):
+                    board.append(row)
+                    break
+                else:
+                    print("  Помилка: числа повинні бути лише 0, 1 або 2. Спробуйте ще раз.")
+            except ValueError:
+                print("  Помилка: введіть числа через пробіл. Спробуйте ще раз.")
+    return board
+
+
 def main():
     show_rules()
     ask_ready()
 
-    # Кількість тестових випадків
     while True:
         try:
             test_cases = int(input("Введіть кількість тестових випадків (від 1 до 11): "))
@@ -126,27 +145,7 @@ def main():
 
     for i in range(1, test_cases + 1):
         print(f"=== Тест #{i} ===")
-        print("Введіть поле 19x19 (19 рядків, у кожному 19 чисел через пробіл):")
-        print("  0 = порожньо, 1 = чорний камінь, 2 = білий камінь")
-        print()
-
-        board = []
-        for row_num in range(1, 20):
-            while True:
-                try:
-                    line = input(f"  Рядок {row_num}: ").split()
-                    if len(line) != 19:
-                        print(f"  Помилка: потрібно рівно 19 чисел, ви ввели {len(line)}. Спробуйте ще раз.")
-                        continue
-                    row = list(map(int, line))
-                    if all(x in [0, 1, 2] for x in row):
-                        board.append(row)
-                        break
-                    else:
-                        print("  Помилка: числа повинні бути лише 0, 1 або 2. Спробуйте ще раз.")
-                except ValueError:
-                    print("  Помилка: введіть числа через пробіл. Спробуйте ще раз.")
-
+        board = read_board()
         print()
         solve(board, i)
 
