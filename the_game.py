@@ -1,4 +1,6 @@
 BOARD_SIZE = 19
+WIN_LENGTH = 5
+MAX_TEST_CASES = 11
 
 DIRECTIONS = [
     (0, 1, "горизонтально →"),
@@ -18,10 +20,10 @@ def show_rules():
     print("  - Чорні камені позначаються цифрою 1")
     print("  - Білі камені позначаються цифрою 2")
     print("  - Порожня клітинка позначається цифрою 0")
-    print("  - Перемагає той, хто поставить РІВНО 5")
+    print(f"  - Перемагає той, хто поставить РІВНО {WIN_LENGTH}")
     print("    каменів підряд (по горизонталі, вертикалі")
     print("    або діагоналі)")
-    print("  - ВАЖЛИВО: 6 і більше підряд - НЕ перемога!")
+    print(f"  - ВАЖЛИВО: {WIN_LENGTH + 1} і більше підряд - НЕ перемога!")
     print()
     print("ЩО ВИВОДИТЬ ПРОГРАМА:")
     print("  1 - перемогли чорні")
@@ -47,6 +49,14 @@ def ask_ready():
             print("Введіть 'так' або 'ні'")
 
 
+def is_valid_cell(board, r, c, color):
+    """
+    Перевіряє, чи клітинка (r, c) знаходиться в межах поля
+    і містить камінь заданого кольору.
+    """
+    return 0 <= r < BOARD_SIZE and 0 <= c < BOARD_SIZE and board[r][c] == color
+
+
 def check_winner(board):
     """
     Перевіряє чи виграв гравець (1 або 2).
@@ -61,22 +71,22 @@ def check_winner(board):
                 # перевіряємо, чи це початок послідовності
                 prev_r = row - dr
                 prev_c = col - dc
-                if 0 <= prev_r < BOARD_SIZE and 0 <= prev_c < BOARD_SIZE and board[prev_r][prev_c] == color:
+                if is_valid_cell(board, prev_r, prev_c, color):
                     continue
 
                 count = 0
-                for step in range(5):
+                for step in range(WIN_LENGTH):
                     r = row + dr * step
                     c = col + dc * step
-                    if 0 <= r < BOARD_SIZE and 0 <= c < BOARD_SIZE and board[r][c] == color:
+                    if is_valid_cell(board, r, c, color):
                         count += 1
                     else:
                         break
 
-                if count == 5:
-                    after_r = row + dr * 5
-                    after_c = col + dc * 5
-                    if not (0 <= after_r < BOARD_SIZE and 0 <= after_c < BOARD_SIZE and board[after_r][after_c] == color):
+                if count == WIN_LENGTH:
+                    after_r = row + dr * WIN_LENGTH
+                    after_c = col + dc * WIN_LENGTH
+                    if not is_valid_cell(board, after_r, after_c, color):
                         return color, row + 1, col + 1
     return None
 
@@ -133,11 +143,11 @@ def main():
 
     while True:
         try:
-            test_cases = int(input("Введіть кількість тестових випадків (від 1 до 11): "))
-            if 1 <= test_cases <= 11:
+            test_cases = int(input(f"Введіть кількість тестових випадків (від 1 до {MAX_TEST_CASES}): "))
+            if 1 <= test_cases <= MAX_TEST_CASES:
                 break
             else:
-                print("Число повинно бути від 1 до 11!")
+                print(f"Число повинно бути від 1 до {MAX_TEST_CASES}!")
         except ValueError:
             print("Будь ласка, введіть ціле число!")
 
